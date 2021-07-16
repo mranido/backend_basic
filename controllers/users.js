@@ -1,22 +1,66 @@
 const { response, request } = require("express");
+const bcrypt = require("bcryptjs");
 
-const getUsers = (req = request, res = response) => {
-  const { q, nombre = "No name", apikey, page = 1, limit } = req.query;
-  res.json({ msg: "get API", q, nombre, apikey, page, limit });
+const User = require("../models/user.js");
+
+const getUsers = async (req = request, res = response) => {
+  const { limit = 5, from = 0 } = req.query;
+  const query = { state: true };
+
+  const [total, users] = await Promise.all([
+    User.countDocuments(query),
+    User.find(query).limit(Number(limit)).skip(Number(from)),
+  ]);
+
+  res.json({ total, users });
 };
 
-const postUsers = (req, res = response) => {
-  const { nombre, edad } = req.body;
-  res.status(201).json({ msg: "post API", nombre, edad });
+const postUsers = async (req, res = response) => {
+  const { username, email, password, role } = req.body;
+  const user = new User({ username, email, password, role });
+
+  //Verificar que el correo existe
+
+  //Encriptar la contraseña
+
+  const salt = bcrypt.genSaltSync();
+  user.password = bcrypt.hashSync(password, salt);
+
+  //Guardar en BD
+
+  await user.save();
+  res.status(201).json({ user });
 };
 
-const putUsers = (req, res = response) => {
-  const id = req.params.id;
-  res.status(500).json({ msg: "put API", id });
+const putUsers = async (req, res = response) => {
+  const { id } = req.params;
+
+  const { _id, password, google, email, ...resto } = req.body;
+
+  //TODO VALIDAR contra la BD
+
+  if (password) {
+    //Encriptar la contraseña
+    const salt = bcrypt.genSaltSync();
+    resto.password = bcrypt.hashSync(password, salt);
+  }
+
+  const user = await User.findByIdAndUpdate(id, resto);
+
+  res.status(500).json({ msg: "put API", user });
 };
 
-const deleteUsers = (req, res) => {
-  res.json({ msg: "delete API" });
+const deleteUsers = async (req, res) => {
+  const { id } = req.params;
+
+  //Borrado Físicamente
+
+  //const user = await User.findByIdAndDelete(id);
+
+  //Borrado Lógico
+
+  const user = await User.findByIdAndUpdate(id, { state: false });
+  res.json(user);
 };
 
 const patchUsers = (req, res) => {
