@@ -17,7 +17,7 @@ const hasEmail = async (email = "") => {
 };
 
 const hasId = async (id = "") => {
-  const findId = await User.findById({ id });
+  const findId = await User.findById(id);
 
   if (!findId) {
     throw new Error(`El id ${id} no está registrado en la BD`);

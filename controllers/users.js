@@ -60,7 +60,9 @@ const deleteUsers = async (req, res) => {
   //Borrado Lógico
 
   const user = await User.findByIdAndUpdate(id, { state: false });
-  res.json(user);
+
+  const authenticUser = req.user;
+  res.json({ user, authenticUser });
 };
 
 const patchUsers = (req, res) => {
